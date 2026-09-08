@@ -40,6 +40,7 @@ export const DEFAULT_INITIAL_STATE: SessionState = {
   settings: {
     soundEnabled: true,
     themeMode: 'system',
+    themePalette: 'classic',
   },
 };
 
@@ -64,6 +65,12 @@ export function loadSessionState(): SessionState {
       ? parsed.remainingSeconds 
       : (activeTask ? activeTask.durationMinutes * 60 : 25 * 60);
 
+    const validPalettes = ['classic', 'warm', 'nordic', 'monolith'];
+    const savedPalette = parsed.settings?.themePalette;
+    const themePalette = (savedPalette && validPalettes.includes(savedPalette)) 
+      ? savedPalette 
+      : 'classic';
+
     return {
       tasks,
       activeTaskId,
@@ -72,6 +79,7 @@ export function loadSessionState(): SessionState {
       settings: {
         soundEnabled: parsed.settings?.soundEnabled ?? true,
         themeMode: parsed.settings?.themeMode ?? 'system',
+        themePalette,
       },
     };
   } catch (err) {

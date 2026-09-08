@@ -34,6 +34,7 @@ describe('storage', () => {
       settings: {
         soundEnabled: false,
         themeMode: 'dark',
+        themePalette: 'warm',
       },
     };
 
@@ -46,6 +47,7 @@ describe('storage', () => {
     expect(loaded.remainingSeconds).toBe(3000);
     expect(loaded.settings.soundEnabled).toBe(false);
     expect(loaded.settings.themeMode).toBe('dark');
+    expect(loaded.settings.themePalette).toBe('warm');
   });
 
   it('recovers gracefully from corrupted JSON in localStorage', () => {

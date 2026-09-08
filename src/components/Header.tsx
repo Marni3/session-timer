@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sun, Moon, Volume2, VolumeX, Trash2, Clock } from 'lucide-react';
+import { Sun, Moon, Volume2, VolumeX, Trash2, Clock, Settings } from 'lucide-react';
 import { formatEtaTime } from '../lib/timeUtils';
 
 interface HeaderProps {
@@ -10,6 +10,7 @@ interface HeaderProps {
   isDark: boolean;
   onToggleTheme: () => void;
   onOpenClearConfirm: () => void;
+  onOpenSettings: () => void;
   hasTasks: boolean;
 }
 
@@ -21,6 +22,7 @@ export const Header: React.FC<HeaderProps> = ({
   isDark,
   onToggleTheme,
   onOpenClearConfirm,
+  onOpenSettings,
   hasTasks,
 }) => {
   return (
@@ -67,6 +69,16 @@ export const Header: React.FC<HeaderProps> = ({
           aria-label="Toggle theme"
         >
           {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-stone-600" />}
+        </button>
+
+        {/* Settings Button */}
+        <button
+          onClick={onOpenSettings}
+          className="p-2 rounded-xl text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] transition-colors cursor-pointer"
+          title="Theme palette and preferences"
+          aria-label="Open settings"
+        >
+          <Settings className="w-4 h-4" />
         </button>
 
         {/* Clear All Tasks */}

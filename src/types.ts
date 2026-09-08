@@ -11,9 +11,12 @@ export interface Task {
 
 export type TimerStatus = 'idle' | 'running' | 'paused';
 
+export type ThemePalette = 'classic' | 'warm' | 'nordic' | 'monolith';
+
 export interface SessionSettings {
   soundEnabled: boolean;
   themeMode: 'light' | 'dark' | 'system';
+  themePalette: ThemePalette;
 }
 
 export interface SessionState {

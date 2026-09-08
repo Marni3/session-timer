@@ -1,7 +1,43 @@
 @import "tailwindcss";
 
 @layer base {
-  :root {
+  /* =========================================================================
+     1. Classic Emerald (Original Default)
+     ========================================================================= */
+  :root,
+  [data-palette="classic"] {
+    --color-canvas: #FBFBFA;
+    --color-surface: #FFFFFF;
+    --color-surface-hover: #F4F4F1;
+    --color-border: #EAE9E4;
+    --color-text-primary: #1A1A18;
+    --color-text-muted: #73736E;
+    --color-accent: #10B981;
+    --color-accent-hover: #059669;
+    --color-accent-tint: #ECFDF5;
+    --color-overtime: #D97706;
+    --color-overtime-tint: #FEF3C7;
+  }
+
+  .dark,
+  .dark[data-palette="classic"] {
+    --color-canvas: #121211;
+    --color-surface: #1C1C1A;
+    --color-surface-hover: #262623;
+    --color-border: #2E2E2A;
+    --color-text-primary: #F2F2EF;
+    --color-text-muted: #8E8E88;
+    --color-accent: #34D399;
+    --color-accent-hover: #10B981;
+    --color-accent-tint: rgba(6, 78, 59, 0.35);
+    --color-overtime: #F59E0B;
+    --color-overtime-tint: rgba(120, 53, 15, 0.35);
+  }
+
+  /* =========================================================================
+     2. Warm Paper & Sage (Option 1)
+     ========================================================================= */
+  [data-palette="warm"] {
     --color-canvas: #F6F5F1;
     --color-surface: #FFFFFF;
     --color-surface-hover: #EFECE6;
@@ -15,7 +51,7 @@
     --color-overtime-tint: #F9EFE7;
   }
 
-  .dark {
+  .dark[data-palette="warm"] {
     --color-canvas: #191816;
     --color-surface: #23211E;
     --color-surface-hover: #2D2A26;
@@ -27,6 +63,68 @@
     --color-accent-tint: rgba(126, 159, 142, 0.18);
     --color-overtime: #D48D5B;
     --color-overtime-tint: rgba(212, 141, 91, 0.18);
+  }
+
+  /* =========================================================================
+     3. Nordic Slate & Sea Glass (Option 2)
+     ========================================================================= */
+  [data-palette="nordic"] {
+    --color-canvas: #F3F4F6;
+    --color-surface: #FFFFFF;
+    --color-surface-hover: #EAECEF;
+    --color-border: #DFE2E7;
+    --color-text-primary: #22262B;
+    --color-text-muted: #6B7380;
+    --color-accent: #3C6D68;
+    --color-accent-hover: #2F5551;
+    --color-accent-tint: #EBF3F2;
+    --color-overtime: #A86737;
+    --color-overtime-tint: #F8EDE6;
+  }
+
+  .dark[data-palette="nordic"] {
+    --color-canvas: #16181D;
+    --color-surface: #1F2228;
+    --color-surface-hover: #282C34;
+    --color-border: #30353F;
+    --color-text-primary: #E1E4E8;
+    --color-text-muted: #87909E;
+    --color-accent: #6DA59E;
+    --color-accent-hover: #82B8B1;
+    --color-accent-tint: rgba(109, 165, 158, 0.18);
+    --color-overtime: #CB8957;
+    --color-overtime-tint: rgba(203, 137, 87, 0.18);
+  }
+
+  /* =========================================================================
+     4. Monolith & Willow (Option 3)
+     ========================================================================= */
+  [data-palette="monolith"] {
+    --color-canvas: #F8F8F6;
+    --color-surface: #FFFFFF;
+    --color-surface-hover: #F0F0ED;
+    --color-border: #E6E6E1;
+    --color-text-primary: #262624;
+    --color-text-muted: #787773;
+    --color-accent: #59665B;
+    --color-accent-hover: #475249;
+    --color-accent-tint: #EFF2EF;
+    --color-overtime: #AB6B39;
+    --color-overtime-tint: #F8ECE4;
+  }
+
+  .dark[data-palette="monolith"] {
+    --color-canvas: #171716;
+    --color-surface: #212120;
+    --color-surface-hover: #2A2A28;
+    --color-border: #333330;
+    --color-text-primary: #E8E8E4;
+    --color-text-muted: #8C8C87;
+    --color-accent: #8E9B90;
+    --color-accent-hover: #A1ADA3;
+    --color-accent-tint: rgba(142, 155, 144, 0.18);
+    --color-overtime: #C88A58;
+    --color-overtime-tint: rgba(200, 138, 88, 0.18);
   }
 
   body {

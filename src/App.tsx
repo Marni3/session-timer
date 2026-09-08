@@ -3,6 +3,7 @@ import { Header } from './components/Header';
 import { TimerCircle } from './components/TimerCircle';
 import { TaskList } from './components/TaskList';
 import { ClearConfirmModal } from './components/ClearConfirmModal';
+import { SettingsModal } from './components/SettingsModal';
 import { useTimer } from './hooks/useTimer';
 import { useTheme } from './hooks/useTheme';
 import { Task, SessionState } from './types';
@@ -19,9 +20,17 @@ export function App() {
 
   // 2. Modals State
   const [isClearConfirmOpen, setIsClearConfirmOpen] = useState<boolean>(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
 
-  // 3. Theme
-  const { isDark, toggleTheme } = useTheme(initialState.settings.themeMode);
+  // 3. Theme & Palette
+  const {
+    isDark,
+    toggleTheme,
+    themeMode,
+    setThemeMode,
+    themePalette,
+    setThemePalette,
+  } = useTheme(initialState.settings.themeMode, initialState.settings.themePalette);
 
   // 4. Resolve Active Task
   const activeTask = useMemo(() => {
@@ -74,10 +83,11 @@ export function App() {
       remainingSeconds,
       settings: {
         soundEnabled,
-        themeMode: isDark ? 'dark' : 'light',
+        themeMode,
+        themePalette,
       },
     });
-  }, [tasks, activeTaskId, timerStatus, remainingSeconds, soundEnabled, isDark]);
+  }, [tasks, activeTaskId, timerStatus, remainingSeconds, soundEnabled, themeMode, themePalette]);
 
   // 8. Dynamic ETA Calculations
   const activeEta = useMemo(() => {
@@ -176,11 +186,12 @@ export function App() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space') {
         const target = e.target as HTMLElement;
-        // Don't intercept if user is typing in an input or confirm modal is open
+        // Don't intercept if user is typing in an input or modal is open
         if (
           target.tagName === 'INPUT' ||
           target.tagName === 'TEXTAREA' ||
-          isClearConfirmOpen
+          isClearConfirmOpen ||
+          isSettingsOpen
         ) {
           return;
         }
@@ -191,7 +202,7 @@ export function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [togglePlayPause, isClearConfirmOpen]);
+  }, [togglePlayPause, isClearConfirmOpen, isSettingsOpen]);
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--color-canvas)] text-[var(--color-text-primary)] transition-colors duration-200">
@@ -204,6 +215,7 @@ export function App() {
         isDark={isDark}
         onToggleTheme={toggleTheme}
         onOpenClearConfirm={() => setIsClearConfirmOpen(true)}
+        onOpenSettings={() => setIsSettingsOpen(true)}
         hasTasks={tasks.length > 0}
       />
 
@@ -240,6 +252,18 @@ export function App() {
         onClose={() => setIsClearConfirmOpen(false)}
         onConfirm={handleClearAll}
         taskCount={tasks.length}
+      />
+
+      {/* Settings & Theme Modal */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        palette={themePalette}
+        onSelectPalette={setThemePalette}
+        themeMode={themeMode}
+        onChangeThemeMode={setThemeMode}
+        soundEnabled={soundEnabled}
+        onToggleSound={() => setSoundEnabled((prev) => !prev)}
       />
     </div>
   );
