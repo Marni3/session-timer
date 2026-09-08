@@ -2,6 +2,7 @@ import React from 'react';
 import { Check, Bell, BellOff, Edit2, Trash2 } from 'lucide-react';
 import { Task } from '../types';
 import { formatDurationBadge } from '../lib/timeUtils';
+import { MarkdownText } from './MarkdownText';
 
 interface TaskItemProps {
   task: Task;
@@ -25,9 +26,9 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   return (
     <div
       onClick={() => onSelect(task.id)}
-      className={`group relative flex items-start sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer ${
+      className={`group relative flex items-start justify-between gap-3 p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer ${
         isActive
-          ? 'bg-[var(--color-surface)] border-emerald-500/60 dark:border-emerald-500/50 shadow-sm ring-1 ring-emerald-500/20'
+          ? 'bg-[var(--color-surface)] border-[var(--color-accent)]/60 shadow-sm ring-1 ring-[var(--color-accent)]/20'
           : task.completed
           ? 'bg-[var(--color-canvas)] border-transparent opacity-50'
           : 'bg-[var(--color-surface)] border-[var(--color-border)] hover:border-stone-300 dark:hover:border-stone-700 hover:shadow-2xs'
@@ -42,10 +43,10 @@ export const TaskItem: React.FC<TaskItemProps> = ({
             e.stopPropagation();
             onToggleComplete(task.id);
           }}
-          className={`w-5 h-5 rounded-lg mt-0.5 sm:mt-0 flex items-center justify-center shrink-0 border transition-all cursor-pointer ${
+          className={`w-5 h-5 rounded-lg mt-0.5 flex items-center justify-center shrink-0 border transition-all cursor-pointer ${
             task.completed
-              ? 'bg-emerald-600 border-emerald-600 text-white'
-              : 'border-[var(--color-border)] hover:border-emerald-500/80 bg-[var(--color-canvas)]'
+              ? 'bg-[var(--color-accent)] border-[var(--color-accent)] text-white'
+              : 'border-[var(--color-border)] hover:border-[var(--color-accent)]/80 bg-[var(--color-canvas)]'
           }`}
           aria-label={task.completed ? 'Mark incomplete' : 'Mark complete'}
         >
@@ -60,7 +61,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                 task.completed
                   ? 'line-through text-[var(--color-text-muted)]'
                   : isActive
-                  ? 'text-emerald-700 dark:text-emerald-400 font-bold'
+                  ? 'text-[var(--color-accent)] font-bold'
                   : 'text-[var(--color-text-primary)]'
               }`}
             >
@@ -68,16 +69,16 @@ export const TaskItem: React.FC<TaskItemProps> = ({
             </span>
 
             {isActive && !task.completed && (
-              <span className="hidden sm:inline-block text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">
+              <span className="hidden sm:inline-block text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[var(--color-accent-tint)] text-[var(--color-accent)]">
                 Active
               </span>
             )}
           </div>
 
           {task.description && (
-            <p className="text-xs text-[var(--color-text-muted)] mt-0.5 line-clamp-1 font-normal">
-              {task.description}
-            </p>
+            <div className="mt-2.5 px-3 py-2 rounded-xl bg-[var(--color-canvas)]/80 dark:bg-[var(--color-canvas)] border border-[var(--color-border)]/70 text-xs text-[var(--color-text-muted)] font-normal">
+              <MarkdownText content={task.description} />
+            </div>
           )}
         </div>
       </div>
@@ -98,7 +99,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           }}
           className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
             task.enableFiveMinChime
-              ? 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10'
+              ? 'text-[var(--color-accent)] hover:bg-[var(--color-accent-tint)]'
               : 'text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 hover:bg-[var(--color-surface-hover)]'
           }`}
           title={task.enableFiveMinChime ? '5-min focus chime is ON' : '5-min focus chime is OFF'}

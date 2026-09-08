@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Header } from './components/Header';
 import { TimerCircle } from './components/TimerCircle';
 import { TaskList } from './components/TaskList';
-import { TaskModal } from './components/TaskModal';
 import { ClearConfirmModal } from './components/ClearConfirmModal';
 import { useTimer } from './hooks/useTimer';
 import { useTheme } from './hooks/useTheme';
@@ -19,8 +18,6 @@ export function App() {
   const [soundEnabled, setSoundEnabled] = useState<boolean>(initialState.settings.soundEnabled);
 
   // 2. Modals State
-  const [isTaskModalOpen, setIsTaskModalOpen] = useState<boolean>(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isClearConfirmOpen, setIsClearConfirmOpen] = useState<boolean>(false);
 
   // 3. Theme
@@ -179,11 +176,10 @@ export function App() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space') {
         const target = e.target as HTMLElement;
-        // Don't intercept if user is typing in an input or modal is open
+        // Don't intercept if user is typing in an input or confirm modal is open
         if (
           target.tagName === 'INPUT' ||
           target.tagName === 'TEXTAREA' ||
-          isTaskModalOpen ||
           isClearConfirmOpen
         ) {
           return;
@@ -195,7 +191,7 @@ export function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [togglePlayPause, isTaskModalOpen, isClearConfirmOpen]);
+  }, [togglePlayPause, isClearConfirmOpen]);
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--color-canvas)] text-[var(--color-text-primary)] transition-colors duration-200">
@@ -233,29 +229,12 @@ export function App() {
           onSelectActiveTask={handleSelectActiveTask}
           onToggleCompleteTask={handleToggleTaskComplete}
           onToggleChimeTask={handleToggleChime}
-          onEditTask={(task) => {
-            setEditingTask(task);
-            setIsTaskModalOpen(true);
-          }}
+          onSaveTask={handleSaveTask}
           onDeleteTask={handleDeleteTask}
-          onOpenAddModal={() => {
-            setEditingTask(null);
-            setIsTaskModalOpen(true);
-          }}
         />
       </main>
 
-      {/* Modals */}
-      <TaskModal
-        isOpen={isTaskModalOpen}
-        onClose={() => {
-          setIsTaskModalOpen(false);
-          setEditingTask(null);
-        }}
-        onSave={handleSaveTask}
-        initialTask={editingTask}
-      />
-
+      {/* Confirmation Modal */}
       <ClearConfirmModal
         isOpen={isClearConfirmOpen}
         onClose={() => setIsClearConfirmOpen(false)}

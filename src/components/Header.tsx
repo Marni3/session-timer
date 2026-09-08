@@ -27,7 +27,7 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="w-full max-w-2xl mx-auto px-4 py-4 sm:py-6 flex items-center justify-between gap-3 border-b border-[var(--color-border)]">
       {/* Brand & Concept */}
       <div className="flex items-center gap-2">
-        <div className="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-sm tracking-tighter">
+        <div className="w-7 h-7 rounded-lg bg-[var(--color-accent-tint)] text-[var(--color-accent)] flex items-center justify-center font-bold text-sm tracking-tighter">
           S
         </div>
         <span className="font-bold tracking-tight text-lg sm:text-xl text-[var(--color-text-primary)]">
@@ -41,7 +41,7 @@ export const Header: React.FC<HeaderProps> = ({
           className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-muted)] shadow-xs"
           title="Estimated completion time for all remaining tasks"
         >
-          <Clock className="w-3.5 h-3.5 text-emerald-500" />
+          <Clock className="w-3.5 h-3.5 text-[var(--color-accent)]" />
           <span>Session ends at <strong className="text-[var(--color-text-primary)]">{formatEtaTime(sessionEta)}</strong></span>
           <span className="text-[var(--color-text-muted)] opacity-60">({incompleteCount} left)</span>
         </div>

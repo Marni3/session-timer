@@ -69,7 +69,7 @@ export const TimerCircle: React.FC<TimerCircleProps> = ({
         {/* Digital Clock & Overrun Indicator in Center */}
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center select-none pointer-events-none">
           {isOverrun && (
-            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-overtime)] px-2 py-0.5 rounded-full bg-amber-500/10 mb-1">
+            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-overtime)] px-2 py-0.5 rounded-full bg-[var(--color-overtime-tint)] mb-1">
               Overtime
             </span>
           )}
@@ -88,7 +88,7 @@ export const TimerCircle: React.FC<TimerCircleProps> = ({
               <span>{isOverrun ? 'Past target time' : `Finishes at ${formatEtaTime(activeEta)}`}</span>
               {activeTask.enableFiveMinChime && (
                 <span title="5-min focus chime active" className="inline-flex items-center">
-                  <Bell className="w-3 h-3 text-emerald-500 shrink-0" />
+                  <Bell className="w-3 h-3 text-[var(--color-accent)] shrink-0" />
                 </span>
               )}
             </div>
@@ -116,7 +116,7 @@ export const TimerCircle: React.FC<TimerCircleProps> = ({
           className={`flex items-center gap-2 px-6 sm:px-8 py-3.5 rounded-2xl font-semibold text-sm sm:text-base transition-all shadow-md active:scale-98 cursor-pointer ${
             timerStatus === 'running'
               ? 'bg-[var(--color-surface)] text-[var(--color-text-primary)] border border-[var(--color-border)] hover:bg-[var(--color-surface-hover)]'
-              : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
+              : 'bg-[var(--color-accent)] hover:opacity-90 text-white shadow-xs'
           } disabled:opacity-50 disabled:cursor-not-allowed`}
         >
           {timerStatus === 'running' ? (
@@ -175,7 +175,7 @@ export const TimerCircle: React.FC<TimerCircleProps> = ({
             </h2>
             <button
               onClick={() => onCompleteTask(activeTask.id)}
-              className="text-stone-400 hover:text-emerald-600 dark:hover:text-emerald-400 p-1 transition-colors cursor-pointer"
+              className="text-stone-400 hover:text-[var(--color-accent)] p-1 transition-colors cursor-pointer"
               title="Mark completed"
               aria-label="Mark task completed"
             >

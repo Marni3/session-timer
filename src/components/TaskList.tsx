@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Plus, CheckCheck } from 'lucide-react';
 import { Task } from '../types';
 import { TaskItem } from './TaskItem';
+import { TaskForm } from './TaskForm';
 
 interface TaskListProps {
   tasks: Task[];
@@ -9,9 +10,8 @@ interface TaskListProps {
   onSelectActiveTask: (taskId: string) => void;
   onToggleCompleteTask: (taskId: string) => void;
   onToggleChimeTask: (taskId: string) => void;
-  onEditTask: (task: Task) => void;
+  onSaveTask: (taskData: Omit<Task, 'id' | 'completed' | 'createdAt'>, taskId?: string) => void;
   onDeleteTask: (taskId: string) => void;
-  onOpenAddModal: () => void;
 }
 
 export const TaskList: React.FC<TaskListProps> = ({
@@ -20,12 +20,23 @@ export const TaskList: React.FC<TaskListProps> = ({
   onSelectActiveTask,
   onToggleCompleteTask,
   onToggleChimeTask,
-  onEditTask,
+  onSaveTask,
   onDeleteTask,
-  onOpenAddModal,
 }) => {
+  const [isAdding, setIsAdding] = useState(false);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+
   const pendingTasks = tasks.filter((t) => !t.completed);
   const completedTasks = tasks.filter((t) => t.completed);
+
+  const handleSave = (
+    taskData: Omit<Task, 'id' | 'completed' | 'createdAt'>,
+    taskId?: string
+  ) => {
+    onSaveTask(taskData, taskId);
+    setIsAdding(false);
+    setEditingTaskId(null);
+  };
 
   return (
     <section className="w-full max-w-2xl mx-auto px-4 pb-20">
@@ -35,17 +46,22 @@ export const TaskList: React.FC<TaskListProps> = ({
           Tasks For This Session ({pendingTasks.length})
         </h3>
 
-        <button
-          onClick={onOpenAddModal}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-primary)] hover:border-emerald-500/50 hover:bg-[var(--color-surface-hover)] shadow-2xs transition-all cursor-pointer"
-        >
-          <Plus className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-          <span>Add Task</span>
-        </button>
+        {!isAdding && (
+          <button
+            onClick={() => {
+              setIsAdding(true);
+              setEditingTaskId(null);
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-primary)] hover:border-[var(--color-accent)]/50 hover:bg-[var(--color-surface-hover)] shadow-2xs transition-all cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5 text-[var(--color-accent)]" />
+            <span>Add Task</span>
+          </button>
+        )}
       </div>
 
       {/* Task Queue */}
-      {tasks.length === 0 ? (
+      {tasks.length === 0 && !isAdding ? (
         <div className="text-center py-12 px-4 rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface)]/50">
           <p className="text-sm font-medium text-[var(--color-text-primary)]">
             No tasks set for this session.
@@ -54,8 +70,8 @@ export const TaskList: React.FC<TaskListProps> = ({
             Drop in the 3 to 5 tasks you plan to focus on right now.
           </p>
           <button
-            onClick={onOpenAddModal}
-            className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs transition-colors cursor-pointer"
+            onClick={() => setIsAdding(true)}
+            className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-[var(--color-accent)] text-white hover:opacity-90 shadow-xs transition-opacity cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Your First Task</span>
@@ -64,39 +80,85 @@ export const TaskList: React.FC<TaskListProps> = ({
       ) : (
         <div className="space-y-2.5">
           {/* Incomplete Tasks */}
-          {pendingTasks.map((task) => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              isActive={task.id === activeTaskId}
-              onSelect={onSelectActiveTask}
-              onToggleComplete={onToggleCompleteTask}
-              onToggleChime={onToggleChimeTask}
-              onEdit={onEditTask}
-              onDelete={onDeleteTask}
+          {pendingTasks.map((task) =>
+            editingTaskId === task.id ? (
+              <TaskForm
+                key={task.id}
+                initialTask={task}
+                onSave={handleSave}
+                onCancel={() => setEditingTaskId(null)}
+              />
+            ) : (
+              <TaskItem
+                key={task.id}
+                task={task}
+                isActive={task.id === activeTaskId}
+                onSelect={onSelectActiveTask}
+                onToggleComplete={onToggleCompleteTask}
+                onToggleChime={onToggleChimeTask}
+                onEdit={() => {
+                  setEditingTaskId(task.id);
+                  setIsAdding(false);
+                }}
+                onDelete={onDeleteTask}
+              />
+            )
+          )}
+
+          {/* Inline Add Task Form */}
+          {isAdding ? (
+            <TaskForm
+              onSave={handleSave}
+              onCancel={() => setIsAdding(false)}
             />
-          ))}
+          ) : (
+            pendingTasks.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAdding(true);
+                  setEditingTaskId(null);
+                }}
+                className="w-full py-3 px-4 rounded-2xl border border-dashed border-[var(--color-border)] hover:border-[var(--color-accent)]/50 bg-[var(--color-surface)]/40 hover:bg-[var(--color-surface-hover)] text-xs font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-accent)] flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Task</span>
+              </button>
+            )
+          )}
 
           {/* Completed Tasks Divider & List */}
           {completedTasks.length > 0 && (
             <div className="pt-4">
               <div className="flex items-center gap-2 mb-2 px-1 text-xs font-medium text-[var(--color-text-muted)]">
-                <CheckCheck className="w-3.5 h-3.5 text-emerald-500" />
+                <CheckCheck className="w-3.5 h-3.5 text-[var(--color-accent)]" />
                 <span>Finished ({completedTasks.length})</span>
               </div>
               <div className="space-y-2">
-                {completedTasks.map((task) => (
-                  <TaskItem
-                    key={task.id}
-                    task={task}
-                    isActive={false}
-                    onSelect={onSelectActiveTask}
-                    onToggleComplete={onToggleCompleteTask}
-                    onToggleChime={onToggleChimeTask}
-                    onEdit={onEditTask}
-                    onDelete={onDeleteTask}
-                  />
-                ))}
+                {completedTasks.map((task) =>
+                  editingTaskId === task.id ? (
+                    <TaskForm
+                      key={task.id}
+                      initialTask={task}
+                      onSave={handleSave}
+                      onCancel={() => setEditingTaskId(null)}
+                    />
+                  ) : (
+                    <TaskItem
+                      key={task.id}
+                      task={task}
+                      isActive={false}
+                      onSelect={onSelectActiveTask}
+                      onToggleComplete={onToggleCompleteTask}
+                      onToggleChime={onToggleChimeTask}
+                      onEdit={() => {
+                        setEditingTaskId(task.id);
+                        setIsAdding(false);
+                      }}
+                      onDelete={onDeleteTask}
+                    />
+                  )
+                )}
               </div>
             </div>
           )}

@@ -102,12 +102,18 @@ export function useTimer({
   const startTimer = useCallback(() => {
     setTimerStatus('running');
     lastTickRef.current = Date.now();
-  }, []);
+    if (soundEnabled) {
+      soundEngine.playTactileClick('start');
+    }
+  }, [soundEnabled]);
 
   const pauseTimer = useCallback(() => {
     setTimerStatus('paused');
     lastTickRef.current = null;
-  }, []);
+    if (soundEnabled) {
+      soundEngine.playTactileClick('stop');
+    }
+  }, [soundEnabled]);
 
   const togglePlayPause = useCallback(() => {
     if (timerStatus === 'running') {
@@ -125,7 +131,10 @@ export function useTimer({
     if (activeTask) {
       setRemainingSeconds(activeTask.durationMinutes * 60);
     }
-  }, [activeTask]);
+    if (soundEnabled) {
+      soundEngine.playTactileClick('stop');
+    }
+  }, [activeTask, soundEnabled]);
 
   const adjustMinutes = useCallback((deltaMins: number) => {
     setRemainingSeconds((prev) => prev + deltaMins * 60);
