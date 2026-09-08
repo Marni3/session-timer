@@ -2,6 +2,8 @@ export interface Task {
   id: string;
   title: string;
   durationMinutes: number;
+  remainingSeconds: number; // Can go negative during overrun
+  actualDurationSeconds: number; // Cumulative seconds the timer was active on this task
   description?: string;
   enableFiveMinChime: boolean;
   completed: boolean;

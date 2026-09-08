@@ -106,3 +106,47 @@ export function calculateRingProgress(remainingSeconds: number, totalDurationSec
   if (remainingSeconds < 0) return 1; // Full ring during overtime
   return Math.max(0, Math.min(1, remainingSeconds / totalDurationSeconds));
 }
+
+/**
+ * Format task time badge reflecting estimated duration and actual time spent/left.
+ */
+export function formatTaskProgressBadge(task: Task): string {
+  if (task.completed) {
+    const minsSpent = Math.max(1, Math.round(task.actualDurationSeconds / 60));
+    return `${minsSpent}m spent`;
+  }
+
+  // Active or pending task
+  if (task.actualDurationSeconds > 0) {
+    if (task.remainingSeconds < 0) {
+      const overMins = Math.ceil(Math.abs(task.remainingSeconds) / 60);
+      return `+${overMins}m overtime`;
+    }
+    const minsLeft = Math.ceil(task.remainingSeconds / 60);
+    return `${minsLeft}m left / ${task.durationMinutes}m`;
+  }
+
+  return formatDurationBadge(task.durationMinutes);
+}
+
+/**
+ * Format focus time in seconds to a friendly string (e.g. 45s, 3m 20s, 1h 15m).
+ */
+export function formatFocusTime(seconds: number): string {
+  const abs = Math.abs(seconds);
+  if (abs < 60) {
+    return `${abs}s`;
+  }
+  const hrs = Math.floor(abs / 3600);
+  const mins = Math.floor((abs % 3600) / 60);
+  const secs = abs % 60;
+
+  if (hrs > 0) {
+    return `${hrs}h ${mins}m`;
+  }
+  if (secs === 0) {
+    return `${mins}m`;
+  }
+  return `${mins}m ${secs.toString().padStart(2, '0')}s`;
+}
+

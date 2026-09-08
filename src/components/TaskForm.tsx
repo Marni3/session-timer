@@ -4,7 +4,10 @@ import { Task } from '../types';
 
 interface TaskFormProps {
   initialTask?: Task | null;
-  onSave: (taskData: Omit<Task, 'id' | 'completed' | 'createdAt'>, taskId?: string) => void;
+  onSave: (
+    taskData: Omit<Task, 'id' | 'completed' | 'createdAt' | 'remainingSeconds' | 'actualDurationSeconds'>,
+    taskId?: string
+  ) => void;
   onCancel: () => void;
 }
 

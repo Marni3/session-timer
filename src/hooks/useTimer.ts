@@ -5,34 +5,49 @@ import { soundEngine } from '../lib/sound';
 interface UseTimerOptions {
   activeTask: Task | null;
   soundEnabled: boolean;
-  initialRemainingSeconds: number;
+  onTaskTick: (taskId: string, deltaSec: number) => void;
+  onAdjustTaskTime: (taskId: string, deltaMins: number) => void;
+  onResetTaskTime: (taskId: string) => void;
 }
 
 export function useTimer({
   activeTask,
   soundEnabled,
-  initialRemainingSeconds,
+  onTaskTick,
+  onAdjustTaskTime,
+  onResetTaskTime,
 }: UseTimerOptions) {
   const [timerStatus, setTimerStatus] = useState<TimerStatus>('idle');
-  const [remainingSeconds, setRemainingSeconds] = useState<number>(initialRemainingSeconds);
+  const [remainingSeconds, setRemainingSeconds] = useState<number>(
+    activeTask ? activeTask.remainingSeconds : 25 * 60
+  );
 
   // References for drift calculation and interval tracking
   const lastTickRef = useRef<number | null>(null);
   const elapsedSinceLastChimeRef = useRef<number>(0);
   const hasTriggeredZeroCompletionRef = useRef<boolean>(false);
+  const activeTaskIdRef = useRef<string | null>(activeTask?.id || null);
 
-  // Sync remaining seconds when switching active tasks while idle
+  // Keep activeTaskIdRef current
   useEffect(() => {
-    if (timerStatus === 'idle' && activeTask) {
-      setRemainingSeconds(activeTask.durationMinutes * 60);
+    activeTaskIdRef.current = activeTask?.id || null;
+  }, [activeTask?.id]);
+
+  // Sync remaining seconds when switching active tasks
+  useEffect(() => {
+    if (activeTask) {
+      setRemainingSeconds(activeTask.remainingSeconds);
+      hasTriggeredZeroCompletionRef.current = activeTask.remainingSeconds <= 0;
       elapsedSinceLastChimeRef.current = 0;
-      hasTriggeredZeroCompletionRef.current = false;
+    } else {
+      setRemainingSeconds(0);
+      setTimerStatus('idle');
     }
-  }, [activeTask?.id, timerStatus]);
+  }, [activeTask?.id]);
 
   // Main countdown engine with drift compensation
   useEffect(() => {
-    if (timerStatus !== 'running') {
+    if (timerStatus !== 'running' || !activeTask) {
       lastTickRef.current = null;
       return;
     }
@@ -52,6 +67,11 @@ export function useTimer({
       if (deltaSec > 0) {
         lastTickRef.current = now - (deltaMs % 1000); // Preserve remainder for sub-second precision
 
+        const currentTaskId = activeTaskIdRef.current;
+        if (currentTaskId) {
+          onTaskTick(currentTaskId, deltaSec);
+        }
+
         setRemainingSeconds((prev) => {
           const nextSeconds = prev - deltaSec;
 
@@ -67,7 +87,7 @@ export function useTimer({
         });
 
         // 5-minute recurring focus nudge chime
-        if (activeTask?.enableFiveMinChime) {
+        if (activeTask.enableFiveMinChime) {
           elapsedSinceLastChimeRef.current += deltaSec;
           if (elapsedSinceLastChimeRef.current >= 300) { // 300 seconds = 5 minutes
             elapsedSinceLastChimeRef.current = 0;
@@ -80,16 +100,18 @@ export function useTimer({
     }, 250); // Frequent poll for buttery-smooth responsiveness
 
     return () => clearInterval(interval);
-  }, [timerStatus, soundEnabled, activeTask?.enableFiveMinChime]);
+  }, [timerStatus, soundEnabled, activeTask?.id, activeTask?.enableFiveMinChime, onTaskTick]);
 
   // Handle visibility change (tab switching / sleep wake-up)
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && timerStatus === 'running' && lastTickRef.current) {
+      if (document.visibilityState === 'visible' && timerStatus === 'running' && lastTickRef.current && activeTask) {
         const now = Date.now();
-        const deltaSec = Math.floor((now - lastTickRef.current) / 1000);
+        const deltaMs = now - lastTickRef.current;
+        const deltaSec = Math.floor(deltaMs / 1000);
         if (deltaSec > 0) {
-          lastTickRef.current = now;
+          lastTickRef.current = now - (deltaMs % 1000);
+          onTaskTick(activeTask.id, deltaSec);
           setRemainingSeconds((prev) => prev - deltaSec);
         }
       }
@@ -97,15 +119,16 @@ export function useTimer({
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [timerStatus]);
+  }, [timerStatus, activeTask?.id, onTaskTick]);
 
   const startTimer = useCallback(() => {
+    if (!activeTask) return;
     setTimerStatus('running');
     lastTickRef.current = Date.now();
     if (soundEnabled) {
       soundEngine.playTactileClick('start');
     }
-  }, [soundEnabled]);
+  }, [activeTask, soundEnabled]);
 
   const pauseTimer = useCallback(() => {
     setTimerStatus('paused');
@@ -129,19 +152,23 @@ export function useTimer({
     elapsedSinceLastChimeRef.current = 0;
     hasTriggeredZeroCompletionRef.current = false;
     if (activeTask) {
+      onResetTaskTime(activeTask.id);
       setRemainingSeconds(activeTask.durationMinutes * 60);
     }
     if (soundEnabled) {
       soundEngine.playTactileClick('stop');
     }
-  }, [activeTask, soundEnabled]);
+  }, [activeTask, soundEnabled, onResetTaskTime]);
 
   const adjustMinutes = useCallback((deltaMins: number) => {
+    if (!activeTask) return;
+    onAdjustTaskTime(activeTask.id, deltaMins);
     setRemainingSeconds((prev) => prev + deltaMins * 60);
-  }, []);
+  }, [activeTask, onAdjustTaskTime]);
 
   return {
     timerStatus,
+    setTimerStatus,
     remainingSeconds,
     isOverrun: remainingSeconds < 0,
     startTimer,
@@ -149,6 +176,5 @@ export function useTimer({
     togglePlayPause,
     resetTimer,
     adjustMinutes,
-    setRemainingSeconds,
   };
 }

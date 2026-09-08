@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, CheckCheck } from 'lucide-react';
-import { Task } from '../types';
+import { Task, TimerStatus } from '../types';
 import { TaskItem } from './TaskItem';
 import { TaskForm } from './TaskForm';
 
@@ -10,8 +10,15 @@ interface TaskListProps {
   onSelectActiveTask: (taskId: string) => void;
   onToggleCompleteTask: (taskId: string) => void;
   onToggleChimeTask: (taskId: string) => void;
-  onSaveTask: (taskData: Omit<Task, 'id' | 'completed' | 'createdAt'>, taskId?: string) => void;
+  onSaveTask: (
+    taskData: Omit<Task, 'id' | 'completed' | 'createdAt' | 'remainingSeconds' | 'actualDurationSeconds'>,
+    taskId?: string
+  ) => void;
   onDeleteTask: (taskId: string) => void;
+  onAdjustMinutes?: (delta: number) => void;
+  onResetTime?: () => void;
+  onTogglePlayPause?: () => void;
+  timerStatus?: TimerStatus;
 }
 
 export const TaskList: React.FC<TaskListProps> = ({
@@ -22,6 +29,10 @@ export const TaskList: React.FC<TaskListProps> = ({
   onToggleChimeTask,
   onSaveTask,
   onDeleteTask,
+  onAdjustMinutes,
+  onResetTime,
+  onTogglePlayPause,
+  timerStatus,
 }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -30,7 +41,7 @@ export const TaskList: React.FC<TaskListProps> = ({
   const completedTasks = tasks.filter((t) => t.completed);
 
   const handleSave = (
-    taskData: Omit<Task, 'id' | 'completed' | 'createdAt'>,
+    taskData: Omit<Task, 'id' | 'completed' | 'createdAt' | 'remainingSeconds' | 'actualDurationSeconds'>,
     taskId?: string
   ) => {
     onSaveTask(taskData, taskId);
@@ -101,6 +112,10 @@ export const TaskList: React.FC<TaskListProps> = ({
                   setIsAdding(false);
                 }}
                 onDelete={onDeleteTask}
+                onAdjustMinutes={onAdjustMinutes}
+                onResetTime={onResetTime}
+                onTogglePlayPause={onTogglePlayPause}
+                timerStatus={timerStatus}
               />
             )
           )}

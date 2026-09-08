@@ -4,6 +4,7 @@ import { TimerCircle } from './components/TimerCircle';
 import { TaskList } from './components/TaskList';
 import { ClearConfirmModal } from './components/ClearConfirmModal';
 import { SettingsModal } from './components/SettingsModal';
+import { SwitchTaskModal } from './components/SwitchTaskModal';
 import { useTimer } from './hooks/useTimer';
 import { useTheme } from './hooks/useTheme';
 import { Task, SessionState } from './types';
@@ -21,6 +22,8 @@ export function App() {
   // 2. Modals State
   const [isClearConfirmOpen, setIsClearConfirmOpen] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [isSwitchModalOpen, setIsSwitchModalOpen] = useState<boolean>(false);
+  const [pendingSwitchTaskId, setPendingSwitchTaskId] = useState<string | null>(null);
 
   // 3. Theme & Palette
   const {
@@ -38,28 +41,49 @@ export function App() {
     return tasks.find((t) => t.id === activeTaskId) || null;
   }, [tasks, activeTaskId]);
 
-  // 5. Completion Callback
-  const handleTaskComplete = useCallback((completedId: string) => {
-    setTasks((prevTasks) => {
-      const updated = prevTasks.map((t) =>
-        t.id === completedId
-          ? { ...t, completed: true, completedAt: new Date().toISOString() }
+  // 5. Per-Task Timer Callbacks
+  const handleTaskTick = useCallback((taskId: string, deltaSec: number) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((t) =>
+        t.id === taskId
+          ? {
+              ...t,
+              remainingSeconds: t.remainingSeconds - deltaSec,
+              actualDurationSeconds: t.actualDurationSeconds + deltaSec,
+            }
           : t
-      );
+      )
+    );
+  }, []);
 
-      // Auto-advance to next undone task if the completed one was active
-      if (completedId === activeTaskId) {
-        const nextUndone = updated.find((t) => !t.completed);
-        setActiveTaskId(nextUndone ? nextUndone.id : null);
-      }
+  const handleAdjustTaskTime = useCallback((taskId: string, deltaMins: number) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((t) => {
+        if (t.id === taskId) {
+          const newDuration = Math.max(1, t.durationMinutes + deltaMins);
+          return {
+            ...t,
+            durationMinutes: newDuration,
+            remainingSeconds: t.remainingSeconds + deltaMins * 60,
+          };
+        }
+        return t;
+      })
+    );
+  }, []);
 
-      return updated;
-    });
-
-    if (soundEnabled) {
-      soundEngine.playCompletionGong();
-    }
-  }, [activeTaskId, soundEnabled]);
+  const handleResetTaskTime = useCallback((taskId: string) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((t) =>
+        t.id === taskId
+          ? {
+              ...t,
+              remainingSeconds: t.durationMinutes * 60,
+            }
+          : t
+      )
+    );
+  }, []);
 
   // 6. Timer Hook
   const {
@@ -68,10 +92,13 @@ export function App() {
     togglePlayPause,
     resetTimer,
     adjustMinutes,
+    pauseTimer,
   } = useTimer({
     activeTask,
     soundEnabled,
-    initialRemainingSeconds: initialState.remainingSeconds,
+    onTaskTick: handleTaskTick,
+    onAdjustTaskTime: handleAdjustTaskTime,
+    onResetTaskTime: handleResetTaskTime,
   });
 
   // 7. Save State to LocalStorage on Change
@@ -98,19 +125,34 @@ export function App() {
     return calculateSessionEta(remainingSeconds, tasks, activeTaskId);
   }, [remainingSeconds, tasks, activeTaskId]);
 
-  // 9. Task Management Handlers
+  // 9. Task Switching with Protection
   const handleSelectActiveTask = useCallback((id: string) => {
-    setActiveTaskId(id);
-  }, []);
+    if (id === activeTaskId) return;
+
+    // Confirm if current task is actively running or has recorded focus time
+    const hasRecordedWork = activeTask && (activeTask.actualDurationSeconds > 0 || timerStatus === 'running' || timerStatus === 'paused');
+    if (hasRecordedWork) {
+      setPendingSwitchTaskId(id);
+      setIsSwitchModalOpen(true);
+    } else {
+      setActiveTaskId(id);
+    }
+  }, [activeTaskId, activeTask, timerStatus]);
+
+  const handleConfirmSwitch = useCallback(() => {
+    if (pendingSwitchTaskId) {
+      pauseTimer();
+      setActiveTaskId(pendingSwitchTaskId);
+      setPendingSwitchTaskId(null);
+    }
+    setIsSwitchModalOpen(false);
+  }, [pendingSwitchTaskId, pauseTimer]);
 
   const handleToggleTaskComplete = useCallback((id: string) => {
     setTasks((prev) => {
-      return prev.map((t) => {
+      const updated = prev.map((t) => {
         if (t.id === id) {
           const nextCompleted = !t.completed;
-          if (nextCompleted && soundEnabled) {
-            soundEngine.playCompletionGong();
-          }
           return {
             ...t,
             completed: nextCompleted,
@@ -119,8 +161,24 @@ export function App() {
         }
         return t;
       });
+
+      // If active task was just completed, advance to next undone task and pause
+      if (id === activeTaskId) {
+        const completedActive = updated.find((t) => t.id === id)?.completed;
+        if (completedActive) {
+          const nextUndone = updated.find((t) => !t.completed);
+          setActiveTaskId(nextUndone ? nextUndone.id : null);
+          pauseTimer();
+        }
+      }
+
+      return updated;
     });
-  }, [soundEnabled]);
+
+    if (soundEnabled) {
+      soundEngine.playCompletionGong();
+    }
+  }, [activeTaskId, pauseTimer, soundEnabled]);
 
   const handleToggleChime = useCallback((id: string) => {
     setTasks((prev) =>
@@ -129,25 +187,38 @@ export function App() {
   }, []);
 
   const handleSaveTask = useCallback((
-    taskData: Omit<Task, 'id' | 'completed' | 'createdAt'>,
+    taskData: Omit<Task, 'id' | 'completed' | 'createdAt' | 'remainingSeconds' | 'actualDurationSeconds'>,
     taskId?: string
   ) => {
     if (taskId) {
-      // Edit existing
+      // Edit existing task
       setTasks((prev) =>
-        prev.map((t) => (t.id === taskId ? { ...t, ...taskData } : t))
+        prev.map((t) => {
+          if (t.id === taskId) {
+            const diffMins = taskData.durationMinutes - t.durationMinutes;
+            return {
+              ...t,
+              ...taskData,
+              durationMinutes: taskData.durationMinutes,
+              remainingSeconds: t.remainingSeconds + diffMins * 60,
+            };
+          }
+          return t;
+        })
       );
     } else {
-      // Add new
+      // Add new task
       const newTask: Task = {
         id: `task-${Date.now()}`,
         ...taskData,
+        durationMinutes: taskData.durationMinutes,
+        remainingSeconds: taskData.durationMinutes * 60,
+        actualDurationSeconds: 0,
         completed: false,
         createdAt: new Date().toISOString(),
       };
       setTasks((prev) => [...prev, newTask]);
 
-      // If no active task, set this new task as active
       if (!activeTaskId) {
         setActiveTaskId(newTask.id);
       }
@@ -177,11 +248,10 @@ export function App() {
 
     const currentIndex = undoneTasks.findIndex((t) => t.id === activeTaskId);
     const nextIndex = (currentIndex + 1) % undoneTasks.length;
-    setActiveTaskId(undoneTasks[nextIndex].id);
-    resetTimer();
-  }, [tasks, activeTaskId, resetTimer]);
+    handleSelectActiveTask(undoneTasks[nextIndex].id);
+  }, [tasks, activeTaskId, handleSelectActiveTask]);
 
-  // 10. Spacebar Shortcut for Play/Pause
+  // 11. Spacebar Shortcut for Play/Pause
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space') {
@@ -191,7 +261,8 @@ export function App() {
           target.tagName === 'INPUT' ||
           target.tagName === 'TEXTAREA' ||
           isClearConfirmOpen ||
-          isSettingsOpen
+          isSettingsOpen ||
+          isSwitchModalOpen
         ) {
           return;
         }
@@ -202,7 +273,7 @@ export function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [togglePlayPause, isClearConfirmOpen, isSettingsOpen]);
+  }, [togglePlayPause, isClearConfirmOpen, isSettingsOpen, isSwitchModalOpen]);
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--color-canvas)] text-[var(--color-text-primary)] transition-colors duration-200">
@@ -228,10 +299,7 @@ export function App() {
           timerStatus={timerStatus}
           activeEta={activeEta}
           onTogglePlayPause={togglePlayPause}
-          onReset={resetTimer}
           onSkipNext={handleSkipNext}
-          onAdjustMinutes={adjustMinutes}
-          onCompleteTask={handleTaskComplete}
         />
 
         {/* Task Queue List */}
@@ -243,6 +311,10 @@ export function App() {
           onToggleChimeTask={handleToggleChime}
           onSaveTask={handleSaveTask}
           onDeleteTask={handleDeleteTask}
+          onAdjustMinutes={adjustMinutes}
+          onResetTime={resetTimer}
+          onTogglePlayPause={togglePlayPause}
+          timerStatus={timerStatus}
         />
       </main>
 
@@ -264,6 +336,19 @@ export function App() {
         onChangeThemeMode={setThemeMode}
         soundEnabled={soundEnabled}
         onToggleSound={() => setSoundEnabled((prev) => !prev)}
+      />
+
+      {/* Switch Active Task Confirmation Modal */}
+      <SwitchTaskModal
+        isOpen={isSwitchModalOpen}
+        onClose={() => {
+          setIsSwitchModalOpen(false);
+          setPendingSwitchTaskId(null);
+        }}
+        onConfirmSwitch={handleConfirmSwitch}
+        currentTask={activeTask}
+        targetTask={tasks.find((t) => t.id === pendingSwitchTaskId) || null}
+        isTimerRunning={timerStatus === 'running'}
       />
     </div>
   );
