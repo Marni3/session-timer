@@ -87,7 +87,9 @@ export const TimerCircle: React.FC<TimerCircleProps> = ({
             <div className="text-xs font-medium text-[var(--color-text-muted)] mt-1.5 flex items-center gap-1">
               <span>{isOverrun ? 'Past target time' : `Finishes at ${formatEtaTime(activeEta)}`}</span>
               {activeTask.enableFiveMinChime && (
-                <Bell className="w-3 h-3 text-emerald-500 shrink-0" title="5-min focus chime active" />
+                <span title="5-min focus chime active" className="inline-flex items-center">
+                  <Bell className="w-3 h-3 text-emerald-500 shrink-0" />
+                </span>
               )}
             </div>
           )}

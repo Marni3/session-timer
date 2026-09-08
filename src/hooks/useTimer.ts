@@ -5,14 +5,12 @@ import { soundEngine } from '../lib/sound';
 interface UseTimerOptions {
   activeTask: Task | null;
   soundEnabled: boolean;
-  onCompleteTask: (taskId: string) => void;
   initialRemainingSeconds: number;
 }
 
 export function useTimer({
   activeTask,
   soundEnabled,
-  onCompleteTask,
   initialRemainingSeconds,
 }: UseTimerOptions) {
   const [timerStatus, setTimerStatus] = useState<TimerStatus>('idle');

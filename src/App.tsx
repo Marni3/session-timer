@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Header } from './components/Header';
 import { TimerCircle } from './components/TimerCircle';
 import { TaskList } from './components/TaskList';
@@ -65,7 +65,6 @@ export function App() {
   } = useTimer({
     activeTask,
     soundEnabled,
-    onCompleteTask: handleTaskComplete,
     initialRemainingSeconds: initialState.remainingSeconds,
   });
 
