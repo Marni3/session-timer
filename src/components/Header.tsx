@@ -81,15 +81,16 @@ export const Header: React.FC<HeaderProps> = ({
           <Settings className="w-4 h-4" />
         </button>
 
-        {/* Clear All Tasks */}
+        {/* Clear Session Button */}
         {hasTasks && (
           <button
             onClick={onOpenClearConfirm}
-            className="p-2 rounded-xl text-[var(--color-text-muted)] hover:text-rose-600 dark:hover:text-rose-400 hover:bg-[var(--color-surface-hover)] transition-colors cursor-pointer"
-            title="Clear all tasks for this session"
-            aria-label="Clear all tasks"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium text-[var(--color-text-muted)] hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all cursor-pointer"
+            title="Clear tasks for this session"
+            aria-label="Clear session"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Clear Session</span>
           </button>
         )}
       </div>

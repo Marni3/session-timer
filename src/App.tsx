@@ -236,11 +236,22 @@ export function App() {
     });
   }, [activeTaskId]);
 
-  const handleClearAll = useCallback(() => {
-    setTasks([]);
-    setActiveTaskId(null);
-    resetTimer();
-  }, [resetTimer]);
+  const handleClearSession = useCallback(({ clearUnfinished }: { clearUnfinished: boolean }) => {
+    if (clearUnfinished) {
+      setTasks([]);
+      setActiveTaskId(null);
+      resetTimer();
+    } else {
+      // Keep unfinished tasks, clear only completed tasks
+      setTasks((prev) => {
+        const remaining = prev.filter((t) => !t.completed);
+        if (activeTaskId && !remaining.some((t) => t.id === activeTaskId)) {
+          setActiveTaskId(remaining.length > 0 ? remaining[0].id : null);
+        }
+        return remaining;
+      });
+    }
+  }, [activeTaskId, resetTimer]);
 
   const handleSkipNext = useCallback(() => {
     const undoneTasks = tasks.filter((t) => !t.completed);
@@ -318,12 +329,13 @@ export function App() {
         />
       </main>
 
-      {/* Confirmation Modal */}
+      {/* Clear Session Confirmation Modal */}
       <ClearConfirmModal
         isOpen={isClearConfirmOpen}
         onClose={() => setIsClearConfirmOpen(false)}
-        onConfirm={handleClearAll}
-        taskCount={tasks.length}
+        onConfirm={handleClearSession}
+        unfinishedCount={tasks.filter((t) => !t.completed).length}
+        finishedCount={tasks.filter((t) => t.completed).length}
       />
 
       {/* Settings & Theme Modal */}
