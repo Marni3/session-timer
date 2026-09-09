@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Bell, BellOff, Edit2, Trash2, Play, Pause, RotateCcw } from 'lucide-react';
+import { Check, Bell, BellOff, Edit2, Trash2, Play, Pause, RotateCcw, GripVertical } from 'lucide-react';
 import { Task, TimerStatus } from '../types';
 import { formatTaskProgressBadge, formatFocusTime, formatTimerClock } from '../lib/timeUtils';
 import { MarkdownText } from './MarkdownText';
@@ -16,6 +16,13 @@ interface TaskItemProps {
   onResetTime?: () => void;
   onTogglePlayPause?: () => void;
   timerStatus?: TimerStatus;
+  index?: number;
+  onDragStartItem?: (index: number) => void;
+  onDragOverItem?: (index: number) => void;
+  onDragEndItem?: () => void;
+  onDropItem?: (index: number) => void;
+  isDragging?: boolean;
+  isDragOver?: boolean;
 }
 
 export const TaskItem: React.FC<TaskItemProps> = ({
@@ -30,12 +37,37 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   onResetTime,
   onTogglePlayPause,
   timerStatus,
+  index,
+  onDragStartItem,
+  onDragOverItem,
+  onDragEndItem,
+  onDropItem,
+  isDragging,
+  isDragOver,
 }) => {
   return (
     <div
       onClick={() => onSelect(task.id)}
+      onDragOver={(e) => {
+        if (typeof index === 'number' && onDragOverItem) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          onDragOverItem(index);
+        }
+      }}
+      onDrop={(e) => {
+        if (typeof index === 'number' && onDropItem) {
+          e.preventDefault();
+          e.stopPropagation();
+          onDropItem(index);
+        }
+      }}
       className={`group relative flex flex-col p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer ${
-        isActive
+        isDragging
+          ? 'opacity-40 scale-[0.98] border-dashed border-[var(--color-accent)]'
+          : isDragOver
+          ? 'border-t-2 border-t-[var(--color-accent)] ring-2 ring-[var(--color-accent)]/20'
+          : isActive
           ? 'bg-[var(--color-surface)] border-[var(--color-accent)]/60 shadow-sm ring-1 ring-[var(--color-accent)]/20'
           : task.completed
           ? 'bg-[var(--color-canvas)] border-transparent opacity-50'
@@ -45,7 +77,28 @@ export const TaskItem: React.FC<TaskItemProps> = ({
       {/* Top Row: Left Checkbox & Title, Right Badges & Actions */}
       <div className="flex items-start justify-between gap-3 w-full">
         {/* Left: Complete Checkbox & Text Info */}
-        <div className="flex items-start gap-3 flex-1 min-w-0">
+        <div className="flex items-start gap-2.5 sm:gap-3 flex-1 min-w-0">
+          {/* Drag Grip Handle */}
+          {!task.completed && onDragStartItem && typeof index === 'number' && (
+            <div
+              draggable
+              onDragStart={(e) => {
+                e.stopPropagation();
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', index.toString());
+                onDragStartItem(index);
+              }}
+              onDragEnd={() => {
+                onDragEndItem?.();
+              }}
+              className="p-1 -ml-1 mt-0.5 text-stone-300 dark:text-stone-700 hover:text-stone-500 dark:hover:text-stone-400 cursor-grab active:cursor-grabbing transition-colors shrink-0"
+              title="Drag to reorder task"
+              aria-label="Drag to reorder task"
+            >
+              <GripVertical className="w-4 h-4" />
+            </div>
+          )}
+
           {/* Complete Checkbox */}
           <button
             type="button"

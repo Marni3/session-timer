@@ -52,7 +52,7 @@ class SoundEngine {
   }
 
   /**
-   * Plays a subtle, tactile mechanical switch click on timer start/stop.
+   * Plays a crisp, authentic tactile mechanical keyboard switch sound (snap + thock).
    */
   public playTactileClick(action: 'start' | 'stop'): void {
     const ctx = this.getContext();
@@ -61,14 +61,48 @@ class SoundEngine {
     const now = ctx.currentTime;
 
     if (action === 'start') {
-      // Primary mechanical contact: crisp high impulse
-      this.playImpulse(ctx, 1150, 240, now, 0.022, 0.14);
-      // Secondary micro-click (tactile latching)
-      this.playImpulse(ctx, 620, 180, now + 0.008, 0.015, 0.06);
+      // 1. High-frequency tactile leaf actuation snap
+      this.playImpulse(ctx, 2800, 600, now, 0.007, 0.14, 'triangle');
+      // 2. Mechanical bottom-out thock (housing resonance)
+      this.playResonantThock(ctx, 420, now + 0.002, 0.038, 0.2);
+      // 3. Subtle sub-harmonic case body resonance
+      this.playTone(ctx, 160, now + 0.004, 0.045, 0.08);
     } else {
-      // Damped release click: slightly lower frequency and softer gain
-      this.playImpulse(ctx, 720, 160, now, 0.018, 0.09);
+      // Release click: lighter upstroke slider top-out
+      this.playImpulse(ctx, 2200, 750, now, 0.008, 0.09, 'triangle');
+      this.playResonantThock(ctx, 520, now + 0.001, 0.028, 0.13);
     }
+  }
+
+  private playResonantThock(
+    ctx: AudioContext,
+    centerFreq: number,
+    startTime: number,
+    duration: number,
+    maxGain: number
+  ): void {
+    const osc = ctx.createOscillator();
+    const filter = ctx.createBiquadFilter();
+    const gain = ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(centerFreq, startTime);
+    osc.frequency.exponentialRampToValueAtTime(centerFreq * 0.6, startTime + duration);
+
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(centerFreq, startTime);
+    filter.Q.setValueAtTime(3.5, startTime);
+
+    gain.gain.setValueAtTime(0.0001, startTime);
+    gain.gain.exponentialRampToValueAtTime(maxGain, startTime + 0.002);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(startTime);
+    osc.stop(startTime + duration + 0.01);
   }
 
   private playImpulse(
@@ -77,12 +111,13 @@ class SoundEngine {
     endFreq: number,
     startTime: number,
     duration: number,
-    maxGain: number
+    maxGain: number,
+    oscType: OscillatorType = 'sine'
   ): void {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
 
-    osc.type = 'sine';
+    osc.type = oscType;
     osc.frequency.setValueAtTime(startFreq, startTime);
     osc.frequency.exponentialRampToValueAtTime(Math.max(20, endFreq), startTime + duration);
 

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { X, Check, Sun, Moon, Monitor, Volume2, VolumeX, Sparkles } from 'lucide-react';
+import { X, Check, Sun, Moon, Monitor, Volume2, VolumeX, Sparkles, CircleDot } from 'lucide-react';
 import { ThemePalette } from '../types';
 import { ThemeMode } from '../hooks/useTheme';
 
@@ -12,6 +12,8 @@ interface SettingsModalProps {
   onChangeThemeMode: (mode: ThemeMode) => void;
   soundEnabled: boolean;
   onToggleSound: () => void;
+  showTimerRing: boolean;
+  onToggleTimerRing: () => void;
 }
 
 interface PaletteOption {
@@ -62,6 +64,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onChangeThemeMode,
   soundEnabled,
   onToggleSound,
+  showTimerRing,
+  onToggleTimerRing,
 }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -101,11 +105,50 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </button>
         </div>
 
-        {/* Section 1: Palette Selection */}
-        <div className="space-y-2.5">
-          <label className="block text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
-            Color Palette
+        {/* Section 1: Appearance Mode */}
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)] mb-2.5">
+            Appearance Mode
           </label>
+          <div className="grid grid-cols-3 gap-2">
+            {(
+              [
+                { mode: 'light', label: 'Daylight', icon: Sun },
+                { mode: 'dark', label: 'Obsidian', icon: Moon },
+                { mode: 'system', label: 'System', icon: Monitor },
+              ] as const
+            ).map(({ mode, label, icon: Icon }) => {
+              const isSelected = themeMode === mode;
+              return (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => onChangeThemeMode(mode)}
+                  className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-2xl border text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                    isSelected
+                      ? 'border-[var(--color-accent)] bg-[var(--color-accent-tint)] text-[var(--color-accent)] shadow-xs'
+                      : 'border-[var(--color-border)] bg-[var(--color-canvas)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:border-stone-300 dark:hover:border-stone-700'
+                  }`}
+                >
+                  <Icon className="w-4 h-4 shrink-0" />
+                  <span>{label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Section 2: Color Palette Presets */}
+        <div>
+          <div className="flex items-center justify-between mb-2.5">
+            <label className="block text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
+              Color Palette
+            </label>
+            <span className="text-[11px] text-[var(--color-text-muted)]">
+              Dual-mode calibrated
+            </span>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {PALETTE_OPTIONS.map((opt) => {
               const isSelected = palette === opt.id;
@@ -114,36 +157,51 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   key={opt.id}
                   type="button"
                   onClick={() => onSelectPalette(opt.id)}
-                  className={`flex flex-col text-left p-3 rounded-2xl border transition-all cursor-pointer ${
+                  className={`flex flex-col p-3 rounded-2xl border text-left transition-all cursor-pointer ${
                     isSelected
-                      ? 'border-[var(--color-accent)] bg-[var(--color-surface)] shadow-xs ring-1 ring-[var(--color-accent)]/20'
-                      : 'border-[var(--color-border)] bg-[var(--color-canvas)]/60 hover:bg-[var(--color-surface-hover)]'
+                      ? 'border-[var(--color-accent)] ring-1 ring-[var(--color-accent)] bg-[var(--color-canvas)] shadow-xs'
+                      : 'border-[var(--color-border)] bg-[var(--color-canvas)] hover:border-stone-300 dark:hover:border-stone-700 hover:shadow-2xs'
                   }`}
                 >
-                  <div className="flex items-center justify-between w-full">
-                    <span className={`text-xs sm:text-sm font-semibold ${
-                      isSelected ? 'text-[var(--color-accent)] font-bold' : 'text-[var(--color-text-primary)]'
-                    }`}>
+                  <div className="flex items-center justify-between w-full mb-1">
+                    <span className="text-xs sm:text-sm font-bold text-[var(--color-text-primary)]">
                       {opt.name}
                     </span>
-                    {isSelected && <Check className="w-4 h-4 text-[var(--color-accent)] stroke-[2.5]" />}
+                    {isSelected && (
+                      <Check className="w-3.5 h-3.5 text-[var(--color-accent)] stroke-[3]" />
+                    )}
                   </div>
 
-                  <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5 line-clamp-1 leading-snug">
+                  <span className="text-[11px] text-[var(--color-text-muted)] leading-tight mb-2.5">
                     {opt.tagline}
-                  </p>
+                  </span>
 
-                  {/* Swatch Preview Bar */}
-                  <div className="flex items-center gap-1.5 mt-2.5">
-                    {/* Light preview swatch */}
-                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-stone-200 dark:border-stone-700 bg-white" title="Light mode preview">
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: opt.lightSwatches.accent }} />
-                      <span className="text-[9px] text-stone-600 font-medium">Light</span>
+                  {/* Live Mini Color Swatches */}
+                  <div className="flex items-center gap-2 mt-auto">
+                    {/* Light Preview Pill */}
+                    <div
+                      className="flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-stone-200 text-[9px] font-medium"
+                      style={{ backgroundColor: opt.lightSwatches.canvas, color: '#1c1917' }}
+                      title="Light mode preview"
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: opt.lightSwatches.accent }}
+                      />
+                      <span>Light</span>
                     </div>
-                    {/* Dark preview swatch */}
-                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-stone-800 bg-[#161616]" title="Dark mode preview">
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: opt.darkSwatches.accent }} />
-                      <span className="text-[9px] text-stone-300 font-medium">Dark</span>
+
+                    {/* Dark Preview Pill */}
+                    <div
+                      className="flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-stone-800 text-[9px] font-medium"
+                      style={{ backgroundColor: opt.darkSwatches.canvas, color: '#f5f5f4' }}
+                      title="Dark mode preview"
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: opt.darkSwatches.accent }}
+                      />
+                      <span>Dark</span>
                     </div>
                   </div>
                 </button>
@@ -152,39 +210,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
         </div>
 
-        {/* Section 2: Appearance / Theme Mode */}
-        <div className="space-y-2">
-          <label className="block text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
-            Appearance
-          </label>
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              { id: 'light' as ThemeMode, label: 'Daylight', icon: Sun },
-              { id: 'dark' as ThemeMode, label: 'Obsidian', icon: Moon },
-              { id: 'system' as ThemeMode, label: 'System', icon: Monitor },
-            ].map(({ id, label, icon: Icon }) => {
-              const isCurrent = themeMode === id;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => onChangeThemeMode(id)}
-                  className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
-                    isCurrent
-                      ? 'border-[var(--color-accent)] bg-[var(--color-accent-tint)] text-[var(--color-accent)] font-bold'
-                      : 'border-[var(--color-border)] bg-[var(--color-canvas)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]'
-                  }`}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                  <span>{label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Section 3: Sound Effects Toggle */}
-        <div className="pt-1">
+        {/* Section 3: Timer & Audio Preferences */}
+        <div className="space-y-2.5 pt-1">
+          {/* Audio Feedback Toggle */}
           <label
             onClick={onToggleSound}
             className="flex items-center justify-between p-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-canvas)] cursor-pointer hover:bg-[var(--color-surface-hover)] transition-colors select-none"
@@ -197,10 +225,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               )}
               <div>
                 <span className="block text-xs sm:text-sm font-semibold text-[var(--color-text-primary)]">
-                  Audio Feedback & Tactile Clicks
+                  Audio Feedback & Mechanical Clicks
                 </span>
                 <span className="block text-[11px] text-[var(--color-text-muted)]">
-                  Synthetic focus nudges, completion gongs, and switch clicks
+                  Tactile switch snap, bottom-out thock, and session gongs
                 </span>
               </div>
             </div>
@@ -213,6 +241,36 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <div
                 className={`w-4 h-4 rounded-full bg-white transition-transform ${
                   soundEnabled ? 'translate-x-4' : 'translate-x-0'
+                }`}
+              />
+            </div>
+          </label>
+
+          {/* Timer Display Mode (Circular Ring vs Text Only) */}
+          <label
+            onClick={onToggleTimerRing}
+            className="flex items-center justify-between p-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-canvas)] cursor-pointer hover:bg-[var(--color-surface-hover)] transition-colors select-none"
+          >
+            <div className="flex items-center gap-2.5">
+              <CircleDot className="w-4 h-4 text-[var(--color-accent)]" />
+              <div>
+                <span className="block text-xs sm:text-sm font-semibold text-[var(--color-text-primary)]">
+                  Circular Progress Ring
+                </span>
+                <span className="block text-[11px] text-[var(--color-text-muted)]">
+                  {showTimerRing ? 'Display circular countdown ring' : 'Minimal text-only focus clock'}
+                </span>
+              </div>
+            </div>
+
+            <div
+              className={`w-9 h-5 rounded-full transition-colors relative flex items-center px-0.5 ${
+                showTimerRing ? 'bg-[var(--color-accent)]' : 'bg-stone-300 dark:bg-stone-700'
+              }`}
+            >
+              <div
+                className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                  showTimerRing ? 'translate-x-4' : 'translate-x-0'
                 }`}
               />
             </div>

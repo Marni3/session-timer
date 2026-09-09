@@ -39,6 +39,7 @@ describe('storage', () => {
         soundEnabled: false,
         themeMode: 'dark',
         themePalette: 'warm',
+        showTimerRing: false,
       },
     };
 
@@ -54,6 +55,7 @@ describe('storage', () => {
     expect(loaded.settings.soundEnabled).toBe(false);
     expect(loaded.settings.themeMode).toBe('dark');
     expect(loaded.settings.themePalette).toBe('warm');
+    expect(loaded.settings.showTimerRing).toBe(false);
   });
 
   it('migrates legacy tasks lacking remainingSeconds and actualDurationSeconds', () => {

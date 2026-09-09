@@ -19,6 +19,7 @@ export interface SessionSettings {
   soundEnabled: boolean;
   themeMode: 'light' | 'dark' | 'system';
   themePalette: ThemePalette;
+  showTimerRing: boolean;
 }
 
 export interface SessionState {

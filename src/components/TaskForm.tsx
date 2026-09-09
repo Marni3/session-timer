@@ -60,7 +60,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
     <form
       onSubmit={handleSubmit}
       onKeyDown={handleKeyDown}
-      className="bg-[var(--color-surface)] border border-[var(--color-accent)]/50 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3.5 transition-all"
+      className="bg-[var(--color-surface)] border border-[var(--color-accent)]/50 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3.5 transition-all animate-in fade-in-50 zoom-in-95 duration-200"
     >
       {/* Title */}
       <div>

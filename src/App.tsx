@@ -24,6 +24,7 @@ export function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isSwitchModalOpen, setIsSwitchModalOpen] = useState<boolean>(false);
   const [pendingSwitchTaskId, setPendingSwitchTaskId] = useState<string | null>(null);
+  const [showTimerRing, setShowTimerRing] = useState<boolean>(initialState.settings.showTimerRing ?? true);
 
   // 3. Theme & Palette
   const {
@@ -112,9 +113,10 @@ export function App() {
         soundEnabled,
         themeMode,
         themePalette,
+        showTimerRing,
       },
     });
-  }, [tasks, activeTaskId, timerStatus, remainingSeconds, soundEnabled, themeMode, themePalette]);
+  }, [tasks, activeTaskId, timerStatus, remainingSeconds, soundEnabled, themeMode, themePalette, showTimerRing]);
 
   // 8. Dynamic ETA Calculations
   const activeEta = useMemo(() => {
@@ -262,6 +264,13 @@ export function App() {
     handleSelectActiveTask(undoneTasks[nextIndex].id);
   }, [tasks, activeTaskId, handleSelectActiveTask]);
 
+  const handleReorderTasks = useCallback((reorderedPending: Task[]) => {
+    setTasks((prev) => {
+      const completedTasks = prev.filter((t) => t.completed);
+      return [...reorderedPending, ...completedTasks];
+    });
+  }, []);
+
   // 11. Spacebar Shortcut for Play/Pause
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -303,7 +312,7 @@ export function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 w-full max-w-2xl mx-auto flex flex-col justify-start">
-        {/* Central Circular Countdown Ring */}
+        {/* Central Circular Countdown Ring or Text-Only Display */}
         <TimerCircle
           activeTask={activeTask}
           remainingSeconds={remainingSeconds}
@@ -311,6 +320,7 @@ export function App() {
           activeEta={activeEta}
           onTogglePlayPause={togglePlayPause}
           onSkipNext={handleSkipNext}
+          showTimerRing={showTimerRing}
         />
 
         {/* Task Queue List */}
@@ -326,6 +336,7 @@ export function App() {
           onResetTime={resetTimer}
           onTogglePlayPause={togglePlayPause}
           timerStatus={timerStatus}
+          onReorderTasks={handleReorderTasks}
         />
       </main>
 
@@ -348,6 +359,8 @@ export function App() {
         onChangeThemeMode={setThemeMode}
         soundEnabled={soundEnabled}
         onToggleSound={() => setSoundEnabled((prev) => !prev)}
+        showTimerRing={showTimerRing}
+        onToggleTimerRing={() => setShowTimerRing((prev) => !prev)}
       />
 
       {/* Switch Active Task Confirmation Modal */}

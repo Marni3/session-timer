@@ -19,6 +19,7 @@ interface TaskListProps {
   onResetTime?: () => void;
   onTogglePlayPause?: () => void;
   timerStatus?: TimerStatus;
+  onReorderTasks?: (reorderedPending: Task[]) => void;
 }
 
 export const TaskList: React.FC<TaskListProps> = ({
@@ -33,12 +34,41 @@ export const TaskList: React.FC<TaskListProps> = ({
   onResetTime,
   onTogglePlayPause,
   timerStatus,
+  onReorderTasks,
 }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const pendingTasks = tasks.filter((t) => !t.completed);
   const completedTasks = tasks.filter((t) => t.completed);
+
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (index: number) => {
+    if (draggedIndex !== null && draggedIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = (dropTargetIndex: number) => {
+    if (draggedIndex !== null && draggedIndex !== dropTargetIndex && onReorderTasks) {
+      const reordered = [...pendingTasks];
+      const [moved] = reordered.splice(draggedIndex, 1);
+      reordered.splice(dropTargetIndex, 0, moved);
+      onReorderTasks(reordered);
+    }
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
 
   const handleSave = (
     taskData: Omit<Task, 'id' | 'completed' | 'createdAt' | 'remainingSeconds' | 'actualDurationSeconds'>,
@@ -91,7 +121,7 @@ export const TaskList: React.FC<TaskListProps> = ({
       ) : (
         <div className="space-y-2.5">
           {/* Incomplete Tasks */}
-          {pendingTasks.map((task) =>
+          {pendingTasks.map((task, index) =>
             editingTaskId === task.id ? (
               <TaskForm
                 key={task.id}
@@ -103,6 +133,7 @@ export const TaskList: React.FC<TaskListProps> = ({
               <TaskItem
                 key={task.id}
                 task={task}
+                index={index}
                 isActive={task.id === activeTaskId}
                 onSelect={onSelectActiveTask}
                 onToggleComplete={onToggleCompleteTask}
@@ -116,6 +147,12 @@ export const TaskList: React.FC<TaskListProps> = ({
                 onResetTime={onResetTime}
                 onTogglePlayPause={onTogglePlayPause}
                 timerStatus={timerStatus}
+                onDragStartItem={handleDragStart}
+                onDragOverItem={handleDragOver}
+                onDragEndItem={handleDragEnd}
+                onDropItem={handleDrop}
+                isDragging={draggedIndex === index}
+                isDragOver={dragOverIndex === index}
               />
             )
           )}

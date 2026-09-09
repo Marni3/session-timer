@@ -47,6 +47,7 @@ export const DEFAULT_INITIAL_STATE: SessionState = {
     soundEnabled: true,
     themeMode: 'system',
     themePalette: 'classic',
+    showTimerRing: true,
   },
 };
 
@@ -85,6 +86,10 @@ export function loadSessionState(): SessionState {
       ? savedPalette 
       : 'classic';
 
+    const showTimerRing = typeof parsed.settings?.showTimerRing === 'boolean'
+      ? parsed.settings.showTimerRing
+      : true;
+
     return {
       tasks,
       activeTaskId,
@@ -94,6 +99,7 @@ export function loadSessionState(): SessionState {
         soundEnabled: parsed.settings?.soundEnabled ?? true,
         themeMode: parsed.settings?.themeMode ?? 'system',
         themePalette,
+        showTimerRing,
       },
     };
   } catch (err) {
