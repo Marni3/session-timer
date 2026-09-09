@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Plus, CheckCheck } from 'lucide-react';
 import { Task, TimerStatus } from '../types';
 import { TaskItem } from './TaskItem';
-import { TaskForm } from './TaskForm';
+import { TaskForm } from './TaskForm'; // still used for the "add new task" form
 
 interface TaskListProps {
   tasks: Task[];
@@ -121,41 +121,38 @@ export const TaskList: React.FC<TaskListProps> = ({
       ) : (
         <div className="space-y-2.5">
           {/* Incomplete Tasks */}
-          {pendingTasks.map((task, index) =>
-            editingTaskId === task.id ? (
-              <TaskForm
-                key={task.id}
-                initialTask={task}
-                onSave={handleSave}
-                onCancel={() => setEditingTaskId(null)}
-              />
-            ) : (
-              <TaskItem
-                key={task.id}
-                task={task}
-                index={index}
-                isActive={task.id === activeTaskId}
-                onSelect={onSelectActiveTask}
-                onToggleComplete={onToggleCompleteTask}
-                onToggleChime={onToggleChimeTask}
-                onEdit={() => {
-                  setEditingTaskId(task.id);
-                  setIsAdding(false);
-                }}
-                onDelete={onDeleteTask}
-                onAdjustMinutes={onAdjustMinutes}
-                onResetTime={onResetTime}
-                onTogglePlayPause={onTogglePlayPause}
-                timerStatus={timerStatus}
-                onDragStartItem={handleDragStart}
-                onDragOverItem={handleDragOver}
-                onDragEndItem={handleDragEnd}
-                onDropItem={handleDrop}
-                isDragging={draggedIndex === index}
-                isDragOver={dragOverIndex === index}
-              />
-            )
-          )}
+          {pendingTasks.map((task, index) => (
+            <TaskItem
+              key={task.id}
+              task={task}
+              index={index}
+              isActive={task.id === activeTaskId}
+              isEditing={editingTaskId === task.id}
+              onSelect={onSelectActiveTask}
+              onToggleComplete={onToggleCompleteTask}
+              onToggleChime={onToggleChimeTask}
+              onEdit={() => {
+                setEditingTaskId(task.id);
+                setIsAdding(false);
+              }}
+              onCancelEdit={() => setEditingTaskId(null)}
+              onSaveEdit={(taskData, taskId) => {
+                onSaveTask(taskData, taskId);
+                setEditingTaskId(null);
+              }}
+              onDelete={onDeleteTask}
+              onAdjustMinutes={onAdjustMinutes}
+              onResetTime={onResetTime}
+              onTogglePlayPause={onTogglePlayPause}
+              timerStatus={timerStatus}
+              onDragStartItem={handleDragStart}
+              onDragOverItem={handleDragOver}
+              onDragEndItem={handleDragEnd}
+              onDropItem={handleDrop}
+              isDragging={draggedIndex === index}
+              isDragOver={dragOverIndex === index}
+            />
+          ))}
 
           {/* Inline Add Task Form */}
           {isAdding ? (
@@ -187,30 +184,27 @@ export const TaskList: React.FC<TaskListProps> = ({
                 <span>Finished ({completedTasks.length})</span>
               </div>
               <div className="space-y-2">
-                {completedTasks.map((task) =>
-                  editingTaskId === task.id ? (
-                    <TaskForm
-                      key={task.id}
-                      initialTask={task}
-                      onSave={handleSave}
-                      onCancel={() => setEditingTaskId(null)}
-                    />
-                  ) : (
-                    <TaskItem
-                      key={task.id}
-                      task={task}
-                      isActive={false}
-                      onSelect={onSelectActiveTask}
-                      onToggleComplete={onToggleCompleteTask}
-                      onToggleChime={onToggleChimeTask}
-                      onEdit={() => {
-                        setEditingTaskId(task.id);
-                        setIsAdding(false);
-                      }}
-                      onDelete={onDeleteTask}
-                    />
-                  )
-                )}
+                {completedTasks.map((task) => (
+                  <TaskItem
+                    key={task.id}
+                    task={task}
+                    isActive={false}
+                    isEditing={editingTaskId === task.id}
+                    onSelect={onSelectActiveTask}
+                    onToggleComplete={onToggleCompleteTask}
+                    onToggleChime={onToggleChimeTask}
+                    onEdit={() => {
+                      setEditingTaskId(task.id);
+                      setIsAdding(false);
+                    }}
+                    onCancelEdit={() => setEditingTaskId(null)}
+                    onSaveEdit={(taskData, taskId) => {
+                      onSaveTask(taskData, taskId);
+                      setEditingTaskId(null);
+                    }}
+                    onDelete={onDeleteTask}
+                  />
+                ))}
               </div>
             </div>
           )}
